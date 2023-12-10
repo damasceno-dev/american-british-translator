@@ -8,7 +8,7 @@ const translateHandler = async () => {
   const stuff = {"text": textArea.value, "locale": localeArea.value};
   errorArea.innerText = "";
   translatedArea.innerText = "";
-
+  console.log('sending data', stuff)
   const data = await fetch("/api/translate", {
     method: "POST",
     headers: {
@@ -17,8 +17,9 @@ const translateHandler = async () => {
     },
     body: JSON.stringify(stuff)
   });
-
+  console.log('cheguei aqui')
   const parsed = await data.json();
+  console.log(parsed)
   if (parsed.error) {
     errorArea.innerText = JSON.stringify(parsed);
     return;
