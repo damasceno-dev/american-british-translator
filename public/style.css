@@ -53,6 +53,7 @@ input[type="button"] {
 
 .highlight {
   color: green;
+  background: #b1ecb1;
 }
 
 #text-input {

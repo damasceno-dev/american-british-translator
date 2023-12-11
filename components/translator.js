@@ -20,14 +20,24 @@ class Translator {
 
   
   americanToBritish() {
+    //const sentence = this.text.split(/([^\w\s]|\s)+/g);
     const sentence = this.text.split(' ');
     const translatedWords = sentence.map(word => {
-      if (americanToBritishSpelling[word]) {
-        return '<span class="highlight">' +  americanToBritishSpelling[word] + '</span>';
-      } else {
-        return word;
-      }
+      //console.log('word:', word, ' americanWord:', americanOnly[word])
+      const punctuationSplit = word.split(/([^\w\s])+/g);
+      console.log(punctuationSplit)
+      const translatedWithPunctuation = punctuationSplit.map( wp => {       
+        if (americanToBritishSpelling[wp] || americanOnly[wp]) {         
+          const translation = americanToBritishSpelling[wp] || americanOnly[wp];
+          return '<span class="highlight">' +  translation + '</span>';
+        } else {
+          return wp;
+        }
+      })
+      console.log(translatedWithPunctuation)
+      return translatedWithPunctuation.join('');
     })
+    console.log(translatedWords)
 
     this.translation = translatedWords.join(' ');
   }
