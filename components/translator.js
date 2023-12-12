@@ -18,8 +18,90 @@ class Translator {
     }
   }
 
+  translateV2() {
+    const invertedBritish = this.reverseObject(britishOnly);
+    const americanToBritish = {
+      ...americanOnly,
+      ...americanToBritishSpelling,
+      ...americanToBritishTitles,
+      ...invertedBritish,
+    };
+    let sentence = this.text;
+    let translatedSentence = "";
+
+    for (const [key, value] of Object.entries(americanToBritish)) {
+      let valueToFind;
+      let valueToReplace;
+      if (this.locale === "american-to-british") {
+        valueToFind = key;
+        valueToReplace = value;
+      } else if (this.locale === "british-to-american") {
+        valueToFind = value;
+        valueToReplace = key;
+      }
+      if (sentence.toLowerCase().includes(valueToFind.toLowerCase())) {
+        const indexToReplace = sentence
+          .toLowerCase()
+          .indexOf(valueToFind.toLowerCase());
+        const nextCharacther = sentence[indexToReplace + valueToFind.length];
+        const textToReplace = sentence.substring(
+          indexToReplace,
+          indexToReplace + valueToFind.length,
+        );
+        if (/\w/.test(nextCharacther)) {
+          //e.g: match trash instead of trashcan => if next character is a word, ignore
+          continue;
+        }
+        const preText = sentence.substring(0, indexToReplace);
+        const posText = sentence.substring(
+          indexToReplace + valueToFind.length,
+          sentence.length,
+        );
+        const translationCased = this.replicateCase(
+          textToReplace,
+          valueToReplace,
+        );
+        const translated =
+          '<span class="highlight">' + translationCased + "</span>";
+        translatedSentence = preText + translated + posText;
+        sentence = translatedSentence;
+        //break;
+      }
+    }
+
+    let hourToFind;
+    let hourToReplaece;
+    if (this.locale === "american-to-british") {
+      hourToFind = ":";
+      hourToReplaece = ".";
+    } else if (this.locale === "british-to-american") {
+      hourToFind = ".";
+      hourToReplaece = ":";
+    }
+
+    if (translatedSentence.includes(hourToFind)) {
+      //split with spaces
+      const transladedSplit = translatedSentence.split(" ");
+      //map and check if is surrounded by numbers
+      const checkColonArray = transladedSplit.map((word) => {
+        if (word.includes(hourToFind) && this.isSurroundedByNumber(word)) {
+          //if it is: span the word and replace : for .
+          return (
+            '<span class="highlight">' +
+            word.replace(hourToFind, hourToReplaece) +
+            "</span>"
+          );
+        } else {
+          return word;
+        }
+      });
+      translatedSentence = checkColonArray.join(" ");
+    }
+
+    this.translation = translatedSentence;
+  }
+
   americanToBritish() {
-    const hoursAmericanToBritish = {":":"."};
     const americanToBritish = {
       ...americanOnly,
       ...americanToBritishSpelling,
@@ -45,7 +127,9 @@ class Translator {
         //break;
       }
     }
-
+    if (translatedSentence === '') {
+      translatedSentence = sentence;
+    }
     if (translatedSentence.includes(':')) {
       //split with spaces
       const transladedSplit = translatedSentence.split(' ');
@@ -61,12 +145,12 @@ class Translator {
       })
       translatedSentence = checkColonArray.join(' ');
     }
-    
+
     this.translation = translatedSentence;
   }
 
   isSurroundedByNumber(word) {
-    const colonIndex = word.indexOf(':');
+    const colonIndex = word.indexOf(":");
     const prevValue = word[colonIndex - 1];
     const nextValue = word[colonIndex + 1];
 
@@ -82,14 +166,22 @@ class Translator {
     const textToReplicateArray = textToReplicateCase.split(" ");
 
     textToCheckArray.map((word, index) => {
-      let equivalentWord = textToReplicateArray[index]
+      let equivalentWord = textToReplicateArray[index];
       //verify first letter and second letter for each word
       //First UpperCase and the other LowerCase
-      if (word.charAt(0).toUpperCase() === word.charAt(0) && word.charAt(1).toLowerCase() === word.charAt(1)) {
-        textToReplicateArray[index] = equivalentWord.charAt(0).toUpperCase() + equivalentWord.slice(1).toLowerCase();
+      if (
+        word.charAt(0).toUpperCase() === word.charAt(0) &&
+        word.charAt(1).toLowerCase() === word.charAt(1)
+      ) {
+        textToReplicateArray[index] =
+          equivalentWord.charAt(0).toUpperCase() +
+          equivalentWord.slice(1).toLowerCase();
       }
-      //First and Second Uppercase 
-      else if (word.charAt(0).toUpperCase() === word.charAt(0) && word.charAt(1).toUpperCase() === word.charAt(1)) {
+      //First and Second Uppercase
+      else if (
+        word.charAt(0).toUpperCase() === word.charAt(0) &&
+        word.charAt(1).toUpperCase() === word.charAt(1)
+      ) {
         textToReplicateArray[index] = equivalentWord.toUpperCase();
       }
       //any other case is all lowercase
@@ -98,7 +190,11 @@ class Translator {
       }
     });
 
-    return textToReplicateArray.join(' ');
+    return textToReplicateArray.join(" ");
+  }
+
+  reverseObject(obj) {
+    return Object.fromEntries(Object.entries(obj).map((a) => a.reverse()));
   }
 
   americanToBritishDeprecated() {
@@ -122,9 +218,7 @@ class Translator {
     this.translation = translatedWords.join(" ");
   }
 
-  britishToAmerican() {
-    
-  }
+  britishToAmerican() {}
 }
 
 module.exports = Translator;
