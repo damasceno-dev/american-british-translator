@@ -1,3 +1,21 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  padding: 10px;
+  background-color: black;
+  color: aliceblue;
+  font-family: 'Arial';
+}
+input {
+  height: 30px;
+  background-color: gray;
+  color: white;
+  width: 220px;
+  margin-top: 8px;
+}
+
 code {
   background: #d0d0d5;
 }
