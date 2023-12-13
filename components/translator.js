@@ -9,66 +9,51 @@ class Translator {
     this.locale = locale;
     this.translation = "";
   }
-
   translate() {
-    if (this.locale === "american-to-british") {
-      this.americanToBritish();
-    } else if (this.locale === "british-to-american") {
-      this.britishToAmerican();
-    }
-  }
-
-  translateV2() {
-    const invertedBritish = this.reverseObject(britishOnly);
-    const americanToBritish = {
+    let dictionary;
+    const americanToBritishDictionary = {
       ...americanOnly,
       ...americanToBritishSpelling,
       ...americanToBritishTitles,
-      ...invertedBritish,
     };
+    const britishToAmericanSpelling = this.reverseObject(americanToBritishSpelling);
+    const britishToAmericanTtiles = this.reverseObject(americanToBritishTitles);
+    const britishToAmericanDictionary = {
+      ...britishOnly,
+      ...britishToAmericanSpelling,
+      ...britishToAmericanTtiles,
+    }
+
+    if (this.locale === "american-to-british") {
+      dictionary = americanToBritishDictionary;
+    } else if (this.locale === "british-to-american") {
+      dictionary = britishToAmericanDictionary;
+    }
+    
     let sentence = this.text;
     let translatedSentence = "";
 
-    for (const [key, value] of Object.entries(americanToBritish)) {
-      let valueToFind;
-      let valueToReplace;
-      if (this.locale === "american-to-british") {
-        valueToFind = key;
-        valueToReplace = value;
-      } else if (this.locale === "british-to-american") {
-        valueToFind = value;
-        valueToReplace = key;
-      }
-      if (sentence.toLowerCase().includes(valueToFind.toLowerCase())) {
-        const indexToReplace = sentence
-          .toLowerCase()
-          .indexOf(valueToFind.toLowerCase());
-        const nextCharacther = sentence[indexToReplace + valueToFind.length];
-        const textToReplace = sentence.substring(
-          indexToReplace,
-          indexToReplace + valueToFind.length,
-        );
-        if (/\w/.test(nextCharacther)) {
-          //e.g: match trash instead of trashcan => if next character is a word, ignore
+    for (const [key, value] of Object.entries(dictionary)) {
+      if (sentence.toLowerCase().includes(key.toLowerCase())) {
+        const indexToReplace = sentence.toLowerCase().indexOf(key.toLowerCase());
+        const nextCharacther = sentence[indexToReplace + key.length];
+        const textToReplace = sentence.substring(indexToReplace,indexToReplace + key.length);
+        if (/\w/.test(nextCharacther)) { //e.g: match trash instead of trashcan => if next character is a word, ignore
           continue;
         }
         const preText = sentence.substring(0, indexToReplace);
-        const posText = sentence.substring(
-          indexToReplace + valueToFind.length,
-          sentence.length,
-        );
-        const translationCased = this.replicateCase(
-          textToReplace,
-          valueToReplace,
-        );
-        const translated =
-          '<span class="highlight">' + translationCased + "</span>";
+        const posText = sentence.substring(indexToReplace + key.length,sentence.length);
+        const translationCased = this.replicateCase(textToReplace, value);
+        const translated ='<span class="highlight">' + translationCased +'</span>';
         translatedSentence = preText + translated + posText;
         sentence = translatedSentence;
         //break;
       }
     }
-
+    if (translatedSentence === '') {
+      translatedSentence = sentence;
+    }
+    
     let hourToFind;
     let hourToReplaece;
     if (this.locale === "american-to-british") {
@@ -80,77 +65,29 @@ class Translator {
     }
 
     if (translatedSentence.includes(hourToFind)) {
-      //split with spaces
-      const transladedSplit = translatedSentence.split(" ");
+      //split with spaces and the punctuation mark at the end. E. g: 4.30. gets only 4.30 to check
+      const transladedSplit = translatedSentence.split(/(\s|.$)/g)
       //map and check if is surrounded by numbers
       const checkColonArray = transladedSplit.map((word) => {
-        if (word.includes(hourToFind) && this.isSurroundedByNumber(word)) {
+        if (word.includes(hourToFind) && this.isSurroundedByNumber(word, hourToFind)) {
           //if it is: span the word and replace : for .
           return (
             '<span class="highlight">' +
             word.replace(hourToFind, hourToReplaece) +
-            "</span>"
+            '</span>'
           );
         } else {
           return word;
         }
       });
-      translatedSentence = checkColonArray.join(" ");
+      translatedSentence = checkColonArray.join("");
     }
 
     this.translation = translatedSentence;
   }
-
-  americanToBritish() {
-    const americanToBritish = {
-      ...americanOnly,
-      ...americanToBritishSpelling,
-      ...americanToBritishTitles,
-    };
-    let sentence = this.text;
-    let translatedSentence = "";
-
-    for (const [key, value] of Object.entries(americanToBritish)) {
-      if (sentence.toLowerCase().includes(key.toLowerCase())) {
-        const indexToReplace = sentence.toLowerCase().indexOf(key.toLowerCase());
-        const nextCharacther = sentence[indexToReplace + key.length];
-        const textToReplace = sentence.substring(indexToReplace,indexToReplace + key.length);
-        if (/\w/.test(nextCharacther)) { //e.g: match trash instead of trashcan => if next character is a word, ignore
-          continue;
-        }
-        const preText = sentence.substring(0, indexToReplace);
-        const posText = sentence.substring(indexToReplace + key.length,sentence.length);
-        const translationCased = this.replicateCase(textToReplace, value);
-        const translated ='<span class="highlight">' + translationCased + "</span>";
-        translatedSentence = preText + translated + posText;
-        sentence = translatedSentence;
-        //break;
-      }
-    }
-    if (translatedSentence === '') {
-      translatedSentence = sentence;
-    }
-    if (translatedSentence.includes(':')) {
-      //split with spaces
-      const transladedSplit = translatedSentence.split(' ');
-      //map and check if is surrounded by numbers
-      const checkColonArray = transladedSplit.map(word => {
-        if (word.includes(':') && this.isSurroundedByNumber(word)) {
-          //if it is: span the word and replace : for .
-          return '<span class="highlight">' + word.replace(':', '.') + "</span>";
-        }
-        else {
-          return word;
-        }
-      })
-      translatedSentence = checkColonArray.join(' ');
-    }
-
-    this.translation = translatedSentence;
-  }
-
-  isSurroundedByNumber(word) {
-    const colonIndex = word.indexOf(":");
+  
+  isSurroundedByNumber(word, hourToFind) {
+    const colonIndex = word.indexOf(hourToFind);
     const prevValue = word[colonIndex - 1];
     const nextValue = word[colonIndex + 1];
 
@@ -164,9 +101,11 @@ class Translator {
   replicateCase(textToCheckCase, textToReplicateCase) {
     const textToCheckArray = textToCheckCase.split(" ");
     const textToReplicateArray = textToReplicateCase.split(" ");
-
     textToCheckArray.map((word, index) => {
       let equivalentWord = textToReplicateArray[index];
+      if(!equivalentWord) {
+        return;
+      }
       //verify first letter and second letter for each word
       //First UpperCase and the other LowerCase
       if (
@@ -196,29 +135,6 @@ class Translator {
   reverseObject(obj) {
     return Object.fromEntries(Object.entries(obj).map((a) => a.reverse()));
   }
-
-  americanToBritishDeprecated() {
-    //const sentence = this.text.split(/([^\w\s]|\s)+/g);
-    const sentence = this.text.split(" ");
-    const translatedWords = sentence.map((word) => {
-      //console.log('word:', word, ' americanWord:', americanOnly[word])
-      const punctuationSplit = word.split(/([^\w\s])+/g);
-      const translatedWithPunctuation = punctuationSplit.map((wp) => {
-        if (americanToBritishSpelling[wp] || americanOnly[wp]) {
-          const translation = americanToBritishSpelling[wp] || americanOnly[wp];
-          return '<span class="highlight">' + translation + "</span>";
-        } else {
-          return wp;
-        }
-      });
-      return translatedWithPunctuation.join("");
-    });
-    console.log(translatedWords);
-
-    this.translation = translatedWords.join(" ");
-  }
-
-  britishToAmerican() {}
 }
 
 module.exports = Translator;
